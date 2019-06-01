@@ -54,7 +54,30 @@ from django.apps import apps
 from django.core.signals import request_finished
 from django.dispatch import Signal
 from django.utils.functional import cached_property
-from django.utils.version import get_version_tuple
+
+
+# -----------------------------------------------------
+# start modification to Django 2.2.1 autoreload.py
+#
+# from django.utils.version import get_version_tuple
+from distutils.version import LooseVersion
+# Copied from Django 2.2.1 utils/version.py
+def get_version_tuple(version):
+    """
+    Return a tuple of version numbers (e.g. (1, 2, 3)) from the version
+    string (e.g. '1.2.3').
+    """
+    loose_version = LooseVersion(version)
+    version_numbers = []
+    for item in loose_version.version:
+        if not isinstance(item, int):
+            break
+        version_numbers.append(item)
+    return tuple(version_numbers)
+#
+# end modification to Django 2.2.1 autoreload.py
+# -----------------------------------------------------
+
 
 autoreload_started = Signal()
 file_changed = Signal(providing_args=['file_path', 'kind'])
