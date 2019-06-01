@@ -50,6 +50,14 @@ from pathlib import Path
 from types import ModuleType
 from zipimport import zipimporter
 
+# -----------------------------------------------------
+# start modification to Django 2.2.1 autoreload.py
+#
+from ipykernel import kernelapp
+#
+# end modification to Django 2.2.1 autoreload.py
+# -----------------------------------------------------
+
 from django.apps import apps
 from django.core.signals import request_finished
 from django.dispatch import Signal
@@ -654,10 +662,17 @@ def start_django(reloader, main_func, *args, **kwargs):
     django_main_thread = threading.Thread(target=main_func, args=args, kwargs=kwargs, name='django-main-thread')
     reloader_thread = ReloaderThread(reloader=reloader, django_main_thread=django_main_thread)
 
+    try:
+        from django_extensions.management.shells import import_objects
+    except ImportError:
+        kernel_user_ns = {}
+    else:
+        kernel_user_ns = import_objects({'quiet_load': True}, style=None)
+
     django_main_thread.setDaemon(True)
     django_main_thread.start()
     reloader_thread.start()
-    time.sleep(24 * 60 * 60)
+    kernelapp.launch_new_instance(argv=[], user_ns=kernel_user_ns)
 #
 # end modification to Django 2.2.1 autoreload.py
 # -----------------------------------------------------
