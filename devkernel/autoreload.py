@@ -315,8 +315,19 @@ class BaseReloader:
         event.
         """
         while django_main_thread.is_alive():
-            if app_reg.ready_event.wait(timeout=0.1):
-                return True
+            # -----------------------------------------------------
+            # start modification to Django 2.2.1 autoreload.py
+            #
+            # if app_reg.ready_event.wait(timeout=0.1):
+            #     return True
+            if hasattr(app_reg, 'ready_event'):
+                if app_reg.ready_event.wait(timeout=0.1):
+                    return True
+            else:
+                return app_reg.ready
+            #
+            # end modification to Django 2.2.1 autoreload.py
+            # -----------------------------------------------------
         else:
             logger.debug('Main Django thread has terminated before apps are ready.')
             return False
