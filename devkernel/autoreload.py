@@ -259,7 +259,14 @@ def get_child_arguments():
 
 def trigger_reload(filename):
     logger.info('%s changed, reloading.', filename)
-    sys.exit(3)
+    # -----------------------------------------------------
+    # start modification to Django 2.2.1 autoreload.py
+    # sys.exit does not cause process exit when called in a non-main thread
+    # sys.exit(3)
+    os._exit(3)
+    #
+    # end modification to Django 2.2.1 autoreload.py
+    # -----------------------------------------------------
 
 
 def restart_with_reloader():
@@ -618,23 +625,42 @@ def get_reloader():
     return WatchmanReloader()
 
 
+# -----------------------------------------------------
+# start modification to Django 2.2.1 autoreload.py
+#
+class ReloaderThread(threading.Thread):
+
+    def __init__(self, reloader, django_main_thread):
+        super().__init__()
+        self.reloader = reloader
+        self.django_main_thread = django_main_thread
+
+    def run(self):
+        while not self.reloader.should_stop:
+            try:
+                self.reloader.run(self.django_main_thread)
+            except WatchmanUnavailable as ex:
+                # It's possible that the watchman service shuts down or otherwise
+                # becomes unavailable. In that case, use the StatReloader.
+                self.reloader = StatReloader()
+                logger.error('Error connecting to Watchman: %s', ex)
+                logger.info('Watching for file changes with %s', self.reloader.__class__.__name__)
+
+
 def start_django(reloader, main_func, *args, **kwargs):
     ensure_echo_on()
 
     main_func = check_errors(main_func)
     django_main_thread = threading.Thread(target=main_func, args=args, kwargs=kwargs, name='django-main-thread')
+    reloader_thread = ReloaderThread(reloader=reloader, django_main_thread=django_main_thread)
+
     django_main_thread.setDaemon(True)
     django_main_thread.start()
-
-    while not reloader.should_stop:
-        try:
-            reloader.run(django_main_thread)
-        except WatchmanUnavailable as ex:
-            # It's possible that the watchman service shuts down or otherwise
-            # becomes unavailable. In that case, use the StatReloader.
-            reloader = StatReloader()
-            logger.error('Error connecting to Watchman: %s', ex)
-            logger.info('Watching for file changes with %s', reloader.__class__.__name__)
+    reloader_thread.start()
+    time.sleep(24 * 60 * 60)
+#
+# end modification to Django 2.2.1 autoreload.py
+# -----------------------------------------------------
 
 
 def run_with_reloader(main_func, *args, **kwargs):
