@@ -672,7 +672,9 @@ def start_django(reloader, main_func, *args, **kwargs):
     django_main_thread.setDaemon(True)
     django_main_thread.start()
     reloader_thread.start()
-    kernelapp.launch_new_instance(argv=[], user_ns=kernel_user_ns)
+    kernelapp.launch_new_instance(argv=[],
+                                  user_ns=kernel_user_ns,
+                                  use_experimental_completions=False)
 #
 # end modification to Django 2.2.1 autoreload.py
 # -----------------------------------------------------
