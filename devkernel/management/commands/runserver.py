@@ -30,11 +30,16 @@ class DevkernelRunserverMixin:
             super().run(**options)
         else:
             assert options['use_reloader'], '--kernel cannot be used with --noreload'
-            if options['use_optimistic_reloader']:
-                with optimistic_reload.django.apply_patches():
-                    devkernel.autoreload.run_with_reloader(self.inner_run, **options)
-            else:
-                devkernel.autoreload.run_with_reloader(self.inner_run, **options)
+            devkernel.autoreload.run_with_reloader(self.inner_run, **options)
+
+    def run_from_argv(self, argv):
+        # We need to patch __import__ early. This means that we have to inspect the command line
+        # before the arguments have been parsed properly.
+        if '--optimistic-reload' in argv:
+            with optimistic_reload.django.apply_patches():
+                super().run_from_argv(argv)
+        else:
+            super().run_from_argv(argv)
 
 
 class Command(DevkernelRunserverMixin, runserver.Command):
