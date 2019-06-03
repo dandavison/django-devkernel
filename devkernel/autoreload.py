@@ -671,7 +671,7 @@ def start_django(reloader, main_func, *args, **kwargs):
 
     django_main_thread.setDaemon(True)
     django_main_thread.start()
-    reloader_thread.run()
+    reloader_thread.start()
     kernelapp.launch_new_instance(argv=[],
                                   user_ns=kernel_user_ns,
                                   quiet=False,
