@@ -670,6 +670,7 @@ def start_django(reloader, main_func, *args, **kwargs):
         kernel_user_ns = import_objects({'quiet_load': True}, style=None)
 
     django_main_thread.setDaemon(True)
+    reloader_thread.setDaemon(True)
     django_main_thread.start()
     reloader_thread.start()
     kernelapp.launch_new_instance(argv=[],
