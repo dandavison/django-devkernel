@@ -389,6 +389,7 @@ class BaseReloader:
     def notify_file_changed(self, path):
         results = file_changed.send(sender=self, file_path=path)
         logger.debug('%s notified as changed. Signal results: %s.', path, results)
+        log(f'%s notified as changed (pid {os.getpid()}). Signal results: %s.', path, results)
         if not any(res[1] for res in results):
             trigger_reload(path)
 
@@ -565,6 +566,9 @@ class WatchmanReloader(BaseReloader):
             return
         logger.debug('Watchman subscription %s has results.', sub)
         for result in subscription:
+
+            log(f'result: {result}')
+
             # When using watch-project, it's not simple to get the relative
             # directory without storing some specific state. Store the full
             # path to the directory in the subscription name, prefixed by its
@@ -572,6 +576,9 @@ class WatchmanReloader(BaseReloader):
             root_directory = Path(result['subscription'].split(':', 1)[1])
             logger.debug('Found root directory %s', root_directory)
             for file in result.get('files', []):
+
+                log(f'file: {file}')
+
                 self.notify_file_changed(root_directory / file)
 
     def request_processed(self, **kwargs):
