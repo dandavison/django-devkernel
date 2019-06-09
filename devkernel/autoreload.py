@@ -694,3 +694,12 @@ def run_with_reloader(main_func, *args, **kwargs):
             sys.exit(exit_code)
     except KeyboardInterrupt:
         pass
+
+
+LOGFILE = open('/tmp/django-devkernel.log', 'a')
+
+def log(msg, *args):
+    print(msg % args, file=LOGFILE, flush=True)
+
+
+log(f'>>>>>>>>>  imported devkernel.autoreload (pid: {os.getpid()}) %s', '<<<<<<<<<')
